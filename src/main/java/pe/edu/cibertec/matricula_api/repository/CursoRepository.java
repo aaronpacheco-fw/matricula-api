@@ -1,8 +1,6 @@
 package pe.edu.cibertec.matricula_api.repository;
 
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import pe.edu.cibertec.matricula_api.model.*;
@@ -16,8 +14,7 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
 
     boolean existsByCodigo(String codigo);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select c from Curso c where c.codigo = :codigo")
+    @Query(value = "select * from curso where codigo = :codigo for update", nativeQuery = true)
     Optional<Curso> bloquear(@Param("codigo") String codigo);
 
     boolean existsByCarrera(Carrera carrera);

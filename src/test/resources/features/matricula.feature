@@ -1,28 +1,36 @@
-Feature: : Matricula de cursos
-  Como alumno de CIBERTEC
-  Quiero matricularme en mis cursos
-  Para llevarlos en el ciclo
+# language: es
+Característica: Matrícula del alumno
 
-  Scenario: Matricula valida con descuento por promedio y anulacion
-    Given  que Ana consulta la API de matricula
-    When se matricula con el codigo "i202610001" en el curso "PS3511"
-    Then el codigo de respuesta es 201
-    And el monto de la matricula es 288,0
-    And el estado de la matricula es "REGISTRADA"
-    When anula es matricula
-    Then el codigo de respuesta es 200
-    And el estado de la matricula es "ANULADA"
+  La calidad revisa el recorrido completo de la fila 5: el cálculo previo, el registro
+  del cobro y la regla que impide deshacer una matrícula ya liquidada.
 
-  Scenario Outline: Matricula rechazada por <motivo>
-    Given  que Ana consulta la API de matricula
-    When se matricula por codigo "<alumno>" en el curso "<curso>"
-    Then el codigo de respuesta es <status>
-    And el codigo de error es "<codigo>"
-    Examples:
-      | motivo             | alumno     | curso  | status | codigo               |
-      | deuda              | i202610004 | PS5511 | 422    | ALUMNO_CON_DEUDA     |
-      | duplicada          | i202610003 | IA5513 | 409    | MATRICULA_DUPLICADA  |
-      | falta de vacantes  | i202610001 | IA5513 | 409    | SIN_VACANTES         |
-      | cruce de horario   | i202610002 | QA5517 | 409    | CRUCE_HORARIO        |
-      | límite de créditos | i202610005 | TS5514 | 422    | LIMITE_CREDITOS      |
-      | alumno inexistente | i999999999 | PS5511 | 404    | ALUMNO_NO_ENCONTRADO |
+  Antecedentes:
+    Dado que dejo a AlumnaD5 frente a la API de matrícula
+    Cuando AlumnaD5 obtiene su credencial con "i202610003" y "Cibertec2026"
+
+  Escenario: Cotizar el curso de tu fila
+    Cuando AlumnaD5 pide el presupuesto de "PI5620" para "i202610003"
+    Entonces la API responde 200
+    Y el presupuesto muestra 6 créditos, subtotal 720.0, descuento 0 y total 720.0
+    Y el cuerpo valida el esquema "cotizacion.json"
+
+  Escenario: Matricularse y pagar el curso de tu fila
+    Cuando AlumnaD5 registra a "i202610003" en "PI5620"
+    Entonces la API responde 201
+    Y el expediente queda en "REGISTRADA"
+    Y el monto del expediente es 720.0
+    Y el cuerpo valida el esquema "matricula.json"
+    Cuando AlumnaD5 cancela el cobro con "TARJETA"
+    Entonces la API responde 200
+    Y el expediente queda en "PAGADA"
+    Y el expediente consigna fecha de pago
+    Cuando AlumnaD5 consulta los cobros de "i202610003" por "TARJETA"
+    Entonces la API responde 200
+    Y el comprobante del expediente recordado usa "TARJETA" y su operación es válida
+
+  Escenario: Regla de negocio que debe fallar
+    Dado que AlumnaD5 ubica el expediente pagado de "PI5620"
+    Cuando AlumnaD5 intenta anular el expediente pagado
+    Entonces la API responde 409
+    Y el error indica "MATRICULA_PAGADA"
+    Y el cuerpo valida el esquema "error.json"

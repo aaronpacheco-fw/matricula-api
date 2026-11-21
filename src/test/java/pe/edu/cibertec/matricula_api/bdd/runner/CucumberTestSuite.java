@@ -1,4 +1,4 @@
-package pe.edu.cibertec.matricula_api.screenplay.runners;
+package pe.edu.cibertec.matricula_api.bdd.runner;
 
 import org.junit.platform.suite.api.IncludeEngines;
 import org.junit.platform.suite.api.SelectPackages;
